@@ -114,12 +114,12 @@
   - [x] 3.2.3 Define the list of proximity signal strings
   - [x] 3.2.4 Write unit tests covering each rule, including proximity signal detection
 
-- [ ] 3.3 Implement the Action Recommender (`lib/recommender.ts`)
-  - [ ] 3.3.1 Define the action pool as a constant array
-  - [ ] 3.3.2 Implement `recommend(category: PollutionCategory, urgency: UrgencyLevel): string[]`
-  - [ ] 3.3.3 Implement inclusion rules for Critical, High, and Low urgency levels
-  - [ ] 3.3.4 Ensure the output list length is always 1–4
-  - [ ] 3.3.5 Write unit tests covering each urgency level's required inclusions
+- [x] 3.3 Implement the Action Recommender (`lib/recommender.ts`)
+  - [x] 3.3.1 Define the action pool as a constant array
+  - [x] 3.3.2 Implement `recommend(category: PollutionCategory, urgency: UrgencyLevel): string[]`
+  - [x] 3.3.3 Implement inclusion rules for Critical, High, and Low urgency levels
+  - [x] 3.3.4 Ensure the output list length is always 1–4
+  - [x] 3.3.5 Write unit tests covering each urgency level's required inclusions
 
 - [~] 3.4 Integrate classifier, scorer, and recommender into the API route
   - [ ] 3.4.1 Replace the placeholder stubs in `app/api/reports/route.ts` with real calls to `classify`, `score`, and `recommend`

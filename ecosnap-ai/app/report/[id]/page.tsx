@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 import UrgencyBadge from "@/components/UrgencyBadge";
 import type { PollutionCategory, UrgencyLevel } from "@/types/report";
 
@@ -20,7 +20,7 @@ export default async function ResultsPage({ params }: ResultsPageProps) {
   const { id } = await params;
 
   // Fetch the report from Supabase by ID
-  const { data: report, error } = await supabase
+  const { data: report, error } = await supabaseServer
     .from("reports")
     .select("*")
     .eq("id", id)

@@ -1,180 +1,139 @@
 import { describe, it, expect } from "vitest";
 import { score, PROXIMITY_SIGNALS } from "./scorer";
+import type { PollutionCategory } from "@/types/report";
 
-describe("score", () => {
-  // Rule 1: burning_waste → Critical regardless of description
-  describe("Rule 1: burning_waste → Critical", () => {
-    it("returns Critical for burning_waste with empty description", () => {
-      expect(score("burning_waste", "")).toBe("Critical");
+describe("score — new taxonomy", () => {
+
+  // ── Rule 1: critical signal keywords override everything ──────────────────
+  describe("Rule 1: critical keyword → Critical (any category)", () => {
+    it("returns Critical when description contains 'on fire'", () => {
+      expect(score("waste_pollution", "debris on fire near the road")).toBe("Critical");
     });
-
-    it("returns Critical for burning_waste with a plain description", () => {
-      expect(score("burning_waste", "Large fire near the park")).toBe("Critical");
+    it("returns Critical for 'chemical spill' with any category", () => {
+      expect(score("soil_pollution", "chemical spill on the ground")).toBe("Critical");
     });
-
-    it("returns Critical for burning_waste even with a proximity signal", () => {
-      // Rule 1 takes priority over Rule 2
-      expect(score("burning_waste", "burning waste beside the lake")).toBe("Critical");
+    it("returns Critical for 'oil spill'", () => {
+      expect(score("water_pollution", "oil spill in the river")).toBe("Critical");
     });
-
-    it("returns Critical for burning_waste with any description", () => {
-      expect(score("burning_waste", "NEAR WATER and beside homes")).toBe("Critical");
+    it("returns Critical for 'toxic cloud'", () => {
+      expect(score("air_pollution", "toxic cloud from the factory")).toBe("Critical");
     });
   });
 
-  // Rule 2: illegal_dumping + proximity signal → High
-  describe("Rule 2: illegal_dumping + proximity signal → High", () => {
-    it('returns High for illegal_dumping with "near water"', () => {
-      expect(score("illegal_dumping", "Trash dumped near water")).toBe("High");
+  // ── Rule 2: hazardous waste subtype → Critical ────────────────────────────
+  describe("Rule 2: waste_pollution + hazardous → Critical", () => {
+    it("returns Critical for waste_pollution with hazardous waste type", () => {
+      expect(score("waste_pollution", "some waste", "hazardous")).toBe("Critical");
     });
-
-    it('returns High for illegal_dumping with "near homes"', () => {
-      expect(score("illegal_dumping", "Illegal dumping near homes")).toBe("High");
-    });
-
-    it('returns High for illegal_dumping with "next to"', () => {
-      expect(score("illegal_dumping", "Waste left next to the school")).toBe("High");
-    });
-
-    it('returns High for illegal_dumping with "beside"', () => {
-      expect(score("illegal_dumping", "Rubbish beside the road")).toBe("High");
-    });
-
-    it('returns High for illegal_dumping with "adjacent"', () => {
-      expect(score("illegal_dumping", "Dumping adjacent to residential area")).toBe("High");
+    it("does NOT return Critical for non-hazardous waste", () => {
+      expect(score("waste_pollution", "plastic bottles", "plastic")).not.toBe("Critical");
     });
   });
 
-  // Rule 2: water_pollution + proximity signal → High
-  describe("Rule 2: water_pollution + proximity signal → High", () => {
-    it('returns High for water_pollution with "near water"', () => {
-      expect(score("water_pollution", "Oil spill near water supply")).toBe("High");
+  // ── Rule 4: major media + proximity signal → High ─────────────────────────
+  describe("Rule 4: major media + proximity → High", () => {
+    it("air_pollution + 'near homes' → High", () => {
+      expect(score("air_pollution", "thick smog near homes")).toBe("High");
     });
-
-    it('returns High for water_pollution with "near homes"', () => {
-      expect(score("water_pollution", "Contamination near homes")).toBe("High");
+    it("water_pollution + 'next to' → High", () => {
+      expect(score("water_pollution", "foam next to the village")).toBe("High");
     });
-
-    it('returns High for water_pollution with "next to"', () => {
-      expect(score("water_pollution", "Pollution next to the village")).toBe("High");
+    it("soil_pollution + 'beside' → High", () => {
+      expect(score("soil_pollution", "contaminated soil beside the school")).toBe("High");
     });
-
-    it('returns High for water_pollution with "beside"', () => {
-      expect(score("water_pollution", "Foam beside the river bank")).toBe("High");
+    it("water_pollution + 'adjacent' → High", () => {
+      expect(score("water_pollution", "discharge adjacent to farmland")).toBe("High");
     });
-
-    it('returns High for water_pollution with "adjacent"', () => {
-      expect(score("water_pollution", "Discharge adjacent to farmland")).toBe("High");
+    it("air_pollution + 'near water' → High", () => {
+      expect(score("air_pollution", "fumes near water supply")).toBe("High");
     });
   });
 
-  // Rule 2: illegal_dumping WITHOUT proximity signal → Medium (not High)
-  describe("Rule 2 absent: illegal_dumping without proximity signal → Medium", () => {
-    it("returns Medium for illegal_dumping with empty description", () => {
-      expect(score("illegal_dumping", "")).toBe("Medium");
+  // ── Rule 5: air_pollution standalone → High ───────────────────────────────
+  describe("Rule 5: air_pollution standalone → High", () => {
+    it("returns High for air_pollution with empty description", () => {
+      expect(score("air_pollution", "")).toBe("High");
     });
-
-    it("returns Medium for illegal_dumping with unrelated description", () => {
-      expect(score("illegal_dumping", "Trash in the alley")).toBe("Medium");
-    });
-
-    it("does not return High for illegal_dumping with no proximity signal", () => {
-      expect(score("illegal_dumping", "Waste scattered on the ground")).not.toBe("High");
+    it("returns High for air_pollution with plain description", () => {
+      expect(score("air_pollution", "thick smog in the morning")).toBe("High");
     });
   });
 
-  // Rule 2: water_pollution WITHOUT proximity signal → Medium (not High)
-  describe("Rule 2 absent: water_pollution without proximity signal → Medium", () => {
+  // ── Rule 6: water_pollution standalone → Medium ───────────────────────────
+  describe("Rule 6: water_pollution standalone → Medium", () => {
+    it("returns Medium for water_pollution without proximity", () => {
+      expect(score("water_pollution", "river looks murky")).toBe("Medium");
+    });
     it("returns Medium for water_pollution with empty description", () => {
       expect(score("water_pollution", "")).toBe("Medium");
     });
+  });
 
-    it("returns Medium for water_pollution with unrelated description", () => {
-      expect(score("water_pollution", "River looks murky")).toBe("Medium");
+  // ── Rule 7: soil_pollution standalone → Medium ────────────────────────────
+  describe("Rule 7: soil_pollution standalone → Medium", () => {
+    it("returns Medium for soil_pollution with empty description", () => {
+      expect(score("soil_pollution", "")).toBe("Medium");
     });
-
-    it("does not return High for water_pollution with no proximity signal", () => {
-      expect(score("water_pollution", "Lake is discoloured")).not.toBe("High");
+    it("returns Medium for soil_pollution with plain description", () => {
+      expect(score("soil_pollution", "brown contaminated earth")).toBe("Medium");
     });
   });
 
-  // Rule 3: air_pollution → Medium
-  describe("Rule 3: air_pollution → Medium", () => {
-    it("returns Medium for air_pollution with empty description", () => {
-      expect(score("air_pollution", "")).toBe("Medium");
+  // ── Rule 8: waste_pollution + proximity → Medium ──────────────────────────
+  describe("Rule 8: waste_pollution + proximity → Medium", () => {
+    it("returns Medium for waste_pollution near homes", () => {
+      expect(score("waste_pollution", "trash dump near homes", "mixed")).toBe("Medium");
     });
-
-    it("returns Medium for air_pollution with a plain description", () => {
-      expect(score("air_pollution", "Thick smog in the morning")).toBe("Medium");
-    });
-
-    it("returns Medium for air_pollution even with a proximity signal (rule 2 does not apply)", () => {
-      // Rule 2 only applies to illegal_dumping / water_pollution
-      expect(score("air_pollution", "Fumes next to the school")).toBe("Medium");
+    it("returns Medium for waste_pollution next to school", () => {
+      expect(score("waste_pollution", "garbage next to the school", "plastic")).toBe("Medium");
     });
   });
 
-  // Rule 4: plastic_waste → Low
-  describe("Rule 4: plastic_waste → Low", () => {
-    it("returns Low for plastic_waste with empty description", () => {
-      expect(score("plastic_waste", "")).toBe("Low");
+  // ── Rule 9: organic / mixed waste → Low ──────────────────────────────────
+  describe("Rule 9: organic/mixed/paper waste → Low", () => {
+    it("returns Low for waste_pollution + organic", () => {
+      expect(score("waste_pollution", "food scraps on roadside", "organic")).toBe("Low");
     });
-
-    it("returns Low for plastic_waste with a plain description", () => {
-      expect(score("plastic_waste", "Bottles scattered on the beach")).toBe("Low");
+    it("returns Low for waste_pollution + mixed (no proximity)", () => {
+      expect(score("waste_pollution", "scattered litter", "mixed")).toBe("Low");
     });
-
-    it("returns Low for plastic_waste even with a proximity signal (rule 2 does not apply)", () => {
-      expect(score("plastic_waste", "Plastic bags beside the river")).toBe("Low");
+    it("returns Low for waste_pollution + paper", () => {
+      expect(score("waste_pollution", "old newspapers", "paper")).toBe("Low");
     });
   });
 
-  // Rule 5: all other combinations → Medium
-  describe("Rule 5: all other combinations → Medium (fallback)", () => {
-    it("returns Medium for illegal_dumping without any proximity signal (fallback)", () => {
-      expect(score("illegal_dumping", "General mess in the park")).toBe("Medium");
-    });
-
-    it("returns Medium for water_pollution without any proximity signal (fallback)", () => {
-      expect(score("water_pollution", "Dark water in the canal")).toBe("Medium");
-    });
+  // ── Rule 10: sensory/perceptual categories → Low ─────────────────────────
+  describe("Rule 10: low-impact categories → Low", () => {
+    const lowCategories: PollutionCategory[] = [
+      "noise_pollution", "light_pollution", "visual_pollution",
+      "thermal_pollution", "electromagnetic_pollution", "other",
+    ];
+    for (const cat of lowCategories) {
+      it(`returns Low for ${cat}`, () => {
+        expect(score(cat, "")).toBe("Low");
+      });
+    }
   });
 
-  // Case-insensitive proximity signal detection
+  // ── Case-insensitive proximity detection ─────────────────────────────────
   describe("case-insensitive proximity signal detection", () => {
-    it('detects "NEAR WATER" in uppercase for illegal_dumping', () => {
-      expect(score("illegal_dumping", "Dumping NEAR WATER here")).toBe("High");
+    it("detects 'NEAR WATER' uppercase for water_pollution", () => {
+      expect(score("water_pollution", "Spill NEAR WATER")).toBe("High");
     });
-
-    it('detects "NEAR HOMES" in uppercase for water_pollution', () => {
-      expect(score("water_pollution", "Spill NEAR HOMES")).toBe("High");
+    it("detects 'Next To' mixed case for soil_pollution", () => {
+      expect(score("soil_pollution", "Contamination Next To the building")).toBe("High");
     });
-
-    it('detects "Next To" in mixed case for illegal_dumping', () => {
-      expect(score("illegal_dumping", "Waste Next To the building")).toBe("High");
-    });
-
-    it('detects "BESIDE" in uppercase for water_pollution', () => {
-      expect(score("water_pollution", "Foam BESIDE the dock")).toBe("High");
-    });
-
-    it('detects "ADJACENT" in uppercase for illegal_dumping', () => {
-      expect(score("illegal_dumping", "Skip ADJACENT to the school")).toBe("High");
+    it("detects 'ADJACENT' for air_pollution", () => {
+      expect(score("air_pollution", "Fumes ADJACENT to the school")).toBe("High");
     });
   });
 
-  // Verify PROXIMITY_SIGNALS export covers all expected signals
+  // ── PROXIMITY_SIGNALS export ─────────────────────────────────────────────
   describe("PROXIMITY_SIGNALS constant", () => {
-    it("exports all five proximity signals", () => {
-      expect(PROXIMITY_SIGNALS).toContain("near water");
-      expect(PROXIMITY_SIGNALS).toContain("near homes");
-      expect(PROXIMITY_SIGNALS).toContain("next to");
-      expect(PROXIMITY_SIGNALS).toContain("beside");
-      expect(PROXIMITY_SIGNALS).toContain("adjacent");
-    });
-
-    it("has exactly five proximity signals", () => {
-      expect(PROXIMITY_SIGNALS).toHaveLength(5);
-    });
+    it("includes 'near water'", () => expect(PROXIMITY_SIGNALS).toContain("near water"));
+    it("includes 'near homes'", () => expect(PROXIMITY_SIGNALS).toContain("near homes"));
+    it("includes 'next to'",    () => expect(PROXIMITY_SIGNALS).toContain("next to"));
+    it("includes 'beside'",     () => expect(PROXIMITY_SIGNALS).toContain("beside"));
+    it("includes 'adjacent'",   () => expect(PROXIMITY_SIGNALS).toContain("adjacent"));
   });
 });

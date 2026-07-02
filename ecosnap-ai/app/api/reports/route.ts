@@ -1,6 +1,6 @@
 // app/api/reports/route.ts
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 
 const ACCEPTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     const arrayBuffer = await photo.arrayBuffer();
     const fileBuffer = new Uint8Array(arrayBuffer);
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabaseServer.storage
       .from("report-photos")
       .upload(fileName, fileBuffer, {
         contentType: photo.type,
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
     const {
       data: { publicUrl },
-    } = supabase.storage.from("report-photos").getPublicUrl(fileName);
+    } = supabaseServer.storage.from("report-photos").getPublicUrl(fileName);
 
     // 2.6.5 — Stub classify, score, recommend (replaced in Task 3.4)
     const pollution_category = "plastic_waste";
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     const recommended_actions = ["Document the location with additional photos"];
 
     // 2.6.6 — Insert into reports table and return the full row
-    const { data: report, error: dbError } = await supabase
+    const { data: report, error: dbError } = await supabaseServer
       .from("reports")
       .insert({
         photo_url: publicUrl,
