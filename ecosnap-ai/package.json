@@ -10,10 +10,11 @@
     "test": "vitest --run"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.49.8",
+    "browser-image-compression": "^2.0.2",
     "framer-motion": "11.15.0",
     "leaflet": "1.9.4",
-    "leaflet.heat": "0.2.0",
     "next": "15.3.3",
     "react": "19.0.0",
     "react-dom": "19.0.0"

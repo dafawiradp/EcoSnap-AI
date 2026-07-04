@@ -121,12 +121,12 @@
   - [x] 3.3.4 Ensure the output list length is always 1–4
   - [x] 3.3.5 Write unit tests covering each urgency level's required inclusions
 
-- [~] 3.4 Integrate classifier, scorer, and recommender into the API route
+- [ ] 3.4 Integrate classifier, scorer, and recommender into the API route
   - [ ] 3.4.1 Replace the placeholder stubs in `app/api/reports/route.ts` with real calls to `classify`, `score`, and `recommend`
   - [ ] 3.4.2 Pass the classification result to the scorer and recommender in the correct order
   - [ ] 3.4.3 Include the classification, urgency, and recommended actions in the Supabase insert
 
-- [~] 3.5 Write property-based tests (fast-check)
+- [ ] 3.5 Write property-based tests (fast-check)
   - [ ] 3.5.1 Install `fast-check` with a pinned version
   - [ ] 3.5.2 Configure Vitest with `jsdom` environment and setup file
   - [ ] 3.5.3 Write property test for P4: Classifier always returns valid category (`fc.string()`)
@@ -143,40 +143,40 @@
 
 ## Phase 4: UI Polish, UX Improvements, and Demo Readiness
 
-- [~] 4.1 Polish UI across all pages
+- [ ] 4.1 Polish UI across all pages
   - [ ] 4.1.1 Apply consistent Tailwind spacing, typography, and color palette across all pages
   - [ ] 4.1.2 Ensure `UrgencyBadge` colors are visually distinct for all four levels
   - [ ] 4.1.3 Add hover and focus states to interactive elements for accessibility
   - [ ] 4.1.4 Test layout on mobile (375 px) and desktop (1280 px) screen sizes
 
-- [~] 4.2 UX improvements
+- [ ] 4.2 UX improvements
   - [ ] 4.2.1 Show a success toast or banner on the results page confirming the report was saved
   - [ ] 4.2.2 Improve loading state feedback on the form (spinner or progress indicator)
   - [ ] 4.2.3 Add a "Submit another report" link on the results page
   - [ ] 4.2.4 Add timestamp formatting on the dashboard (e.g., "2 hours ago" or locale date string)
 
-- [~] 4.3 Accessibility and code quality
+- [ ] 4.3 Accessibility and code quality
   - [ ] 4.3.1 Add `aria-label` attributes to icon-only buttons and form controls
   - [ ] 4.3.2 Ensure all images have `alt` text
   - [ ] 4.3.3 Ensure form error messages are linked to their inputs via `aria-describedby`
   - [ ] 4.3.4 Run ESLint and fix all warnings
 
-- [~] 4.4 Write additional property-based tests for UI components
+- [ ] 4.4 Write additional property-based tests for UI components
   - [ ] 4.4.1 Write property test for P11: UrgencyBadge renders distinct CSS classes for distinct urgency levels
   - [ ] 4.4.2 Write property test for P1: Required field validation blocks submission for any combination of missing required fields
   - [ ] 4.4.3 Write property test for P2: Invalid file type always triggers the file format error message
   - [ ] 4.4.4 Write property test for P3: Oversized file always triggers the file size error message
 
-- [~] 4.5 Run full test suite and fix any failures
+- [ ] 4.5 Run full test suite and fix any failures
   - [ ] 4.5.1 Run `npx vitest --run` and ensure all unit and property tests pass
   - [ ] 4.5.2 Fix any failing tests
 
-- [~] 4.6 Write hackathon README
+- [ ] 4.6 Write hackathon README
   - [ ] 4.6.1 Create `README.md` in the project root with: project name, problem statement, tech stack, setup instructions (env vars, Supabase setup, `npm install`, `npm run dev`), and a brief description of each phase
   - [ ] 4.6.2 Add screenshots or a short demo GIF to the README
   - [ ] 4.6.3 Document how to upgrade the mock classifier to a real AI API
 
-- [~] 4.7 Final demo preparation
+- [ ] 4.7 Final demo preparation
   - [ ] 4.7.1 Deploy to Vercel (connect GitHub repo, add environment variables)
   - [ ] 4.7.2 Verify the deployed app loads, accepts a report submission, and shows results
   - [ ] 4.7.3 Verify the dashboard shows previously submitted reports in correct order
