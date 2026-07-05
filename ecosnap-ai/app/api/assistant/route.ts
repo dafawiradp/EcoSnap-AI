@@ -11,7 +11,7 @@ const model = genAI.getGenerativeModel({
   model: "gemini-2.5-flash",
 });
 
-function buildContext(reports: any[]) {
+function buildContext(reports: unknown[]) {
   const total = reports.length;
 
   const categories: Record<string, number> = {};
@@ -65,9 +65,11 @@ ${JSON.stringify(latest, null, 2)}
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as {
+  message: string;
+};
 
-    const question = body.question;
+    const question = body.message;
 
     if (!question) {
       return NextResponse.json(

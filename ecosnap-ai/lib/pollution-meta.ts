@@ -52,30 +52,46 @@ export const CATEGORY_LABEL: Record<PollutionCategory, string> = {
 
 // ── Waste subtype icons ───────────────────────────────────────────────────────
 export const WASTE_TYPE_ICON: Record<WasteType, string> = {
-  organic:      "🌿",
-  plastic:      "🧴",
-  paper:        "📄",
-  glass:        "🫙",
-  metal:        "🔩",
-  electronic:   "🖥️",
-  hazardous:    "☣️",
+  organic: "🌿",
+  plastic: "🧴",
+  paper: "📄",
+  glass: "🍾",
+  metal: "🥫",
+  electronic: "💻",
+
+  chemical: "🧪",
+  medical: "💉",
+  battery: "🔋",
+  oil: "🛢️",
+
   construction: "🧱",
-  mixed:        "♻️",
-  other:        "❓",
+  textile: "👕",
+  rubber: "🛞",
+
+  mixed: "🗑️",
+  other: "❓",
 };
 
 // ── Human-readable waste subtype labels ──────────────────────────────────────
 export const WASTE_TYPE_LABEL: Record<WasteType, string> = {
-  organic:      "Organic Waste",
-  plastic:      "Plastic Waste",
-  paper:        "Paper Waste",
-  glass:        "Glass Waste",
-  metal:        "Metal Waste",
-  electronic:   "Electronic Waste",
-  hazardous:    "Hazardous Waste",
-  construction: "Construction Waste",
-  mixed:        "Mixed Waste",
-  other:        "Other Waste",
+  organic: "Organic",
+  plastic: "Plastic",
+  paper: "Paper",
+  glass: "Glass",
+  metal: "Metal",
+  electronic: "Electronic",
+
+  chemical: "Chemical",
+  medical: "Medical",
+  battery: "Battery",
+  oil: "Oil",
+
+  construction: "Construction",
+  textile: "Textile",
+  rubber: "Rubber",
+
+  mixed: "Mixed",
+  other: "Other",
 };
 
 // ── Helper: combined display label for a report ───────────────────────────────

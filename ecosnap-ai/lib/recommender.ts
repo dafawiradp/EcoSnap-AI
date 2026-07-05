@@ -25,6 +25,9 @@ export const ACTION_POOL = [
   "Escalate to environmental emergency services",
   "Contact the local environmental agency",
   "Report to the nearest health authority",
+  "Dispose through certified hazardous waste facilities",
+  "Contain the affected area immediately",
+  "Promote recycling and reuse initiatives",
   // Category-specific
   "Install noise barriers or request noise assessment",
   "Reduce outdoor lighting or shield fixtures downward",
@@ -34,7 +37,7 @@ export const ACTION_POOL = [
   "Wear respiratory protection near the area",
   "Seal windows and stay indoors",
   "Request e-waste collection service",
-  "Schedule a hazardous waste pickup",
+  "Schedule a chemical waste pickup",
   "Restrict public access to the affected zone",
 ] as const;
 
@@ -150,10 +153,10 @@ const WASTE_TYPE_ACTIONS: Record<WasteType, RecommendedAction[]> = {
     "Contact the local environmental agency",
     "Notify local authorities",
   ],
-  hazardous: [
+  chemical: [
     "Avoid direct contact with the pollutant",
     "Restrict public access to the affected zone",
-    "Schedule a hazardous waste pickup",
+    "Schedule a chemical waste pickup",
     "Escalate to environmental emergency services",
   ],
   construction: [
@@ -167,6 +170,35 @@ const WASTE_TYPE_ACTIONS: Record<WasteType, RecommendedAction[]> = {
     "Document the location with additional photos",
     "Notify local authorities",
   ],
+  medical: [
+  "Notify local authorities",
+  "Restrict public access to the affected zone",
+  "Contact the local environmental agency",
+],
+
+battery: [
+  "Notify local authorities",
+  "Contact the local environmental agency",
+  "Dispose through certified hazardous waste facilities",
+],
+
+oil: [
+  "Restrict public access to the affected zone",
+  "Notify local authorities",
+  "Contain the affected area immediately",
+],
+
+textile: [
+  "Organize a community cleanup",
+  "Promote recycling and reuse initiatives",
+  "Document the location with additional photos",
+],
+
+rubber: [
+  "Organize a community cleanup",
+  "Notify local authorities",
+  "Promote recycling and reuse initiatives",
+],
   other: [
     "Document the location with additional photos",
     "Notify local authorities",

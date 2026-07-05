@@ -90,7 +90,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(report, { status: 200 });
   } catch (err) {
-    // 2.6.7 — Return 500 with descriptive error for any unexpected failure
+    // 2.6.7 — Return 500 with descriptive error for unexpected failure
     console.error("Unexpected error in POST /api/reports:", err);
     return NextResponse.json(
       { error: "Something went wrong. Please try again." },

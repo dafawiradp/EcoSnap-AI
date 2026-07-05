@@ -24,7 +24,7 @@ export const PROXIMITY_SIGNALS = [
 /** Keywords that push any category to Critical */
 const CRITICAL_SIGNALS = [
   "on fire", "burning", "explosion", "toxic cloud",
-  "acid spill", "hazardous spill", "chemical spill", "oil spill",
+  "acid spill", "chemical spill", "oil spill",
   "mass fish kill", "dead animals",
 ] as const;
 
@@ -38,7 +38,7 @@ function hasAny(text: string, signals: readonly string[]): boolean {
  *
  * Priority rules (highest wins):
  *   1. Any critical signal keyword                         → Critical
- *   2. Hazardous waste subtype                             → Critical
+ *   2. Chemical waste subtype                             → Critical
  *   3. Electronic or chemical waste                        → High
  *   4. Air / water / soil pollution + proximity signal     → High
  *   5. Air pollution (standalone)                         → High
@@ -58,8 +58,8 @@ export function score(
   // Rule 1 — critical signal keywords override everything
   if (hasAny(description, CRITICAL_SIGNALS)) return "Critical";
 
-  // Rule 2 — hazardous waste is always critical
-  if (category === "waste_pollution" && wasteType === "hazardous") return "Critical";
+  // Rule 2 — chemical waste is always critical
+  if (category === "waste_pollution" && wasteType === "chemical") return "Critical";
 
   // Rule 3 — electronic waste or construction near water is high risk
   if (

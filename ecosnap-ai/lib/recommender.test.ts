@@ -11,7 +11,7 @@ const CATEGORIES: PollutionCategory[] = [
 const URGENCY_LEVELS: UrgencyLevel[] = ["Low", "Medium", "High", "Critical"];
 const WASTE_TYPES: WasteType[] = [
   "organic", "plastic", "paper", "glass", "metal",
-  "electronic", "hazardous", "construction", "mixed", "other",
+  "electronic", "chemical", "construction", "mixed", "other",
 ];
 
 // ── Output bounds ─────────────────────────────────────────────────────────────
@@ -92,13 +92,13 @@ describe("Low urgency — always includes community cleanup", () => {
 
 // ── Waste-subtype specific actions ────────────────────────────────────────────
 describe("waste subtype contextual actions", () => {
-  it("hazardous + Critical includes 'Avoid direct contact with the pollutant'", () => {
-    expect(recommend("waste_pollution", "Critical", "hazardous"))
+  it("chemical + Critical includes 'Avoid direct contact with the pollutant'", () => {
+    expect(recommend("waste_pollution", "Critical", "chemical"))
       .toContain("Avoid direct contact with the pollutant");
   });
-  it("hazardous + Medium includes 'Schedule a hazardous waste pickup'", () => {
-    expect(recommend("waste_pollution", "Medium", "hazardous"))
-      .toContain("Schedule a hazardous waste pickup");
+  it("toxic + Medium includes 'Schedule a chemical waste pickup'", () => {
+    expect(recommend("waste_pollution", "Medium", "toxic"))
+      .toContain("Schedule a chemical waste pickup");
   });
   it("electronic + High includes 'Request e-waste collection service'", () => {
     expect(recommend("waste_pollution", "High", "electronic"))
@@ -188,7 +188,7 @@ describe("ACTION_POOL integrity", () => {
     expect(ACTION_POOL).toContain("Wear respiratory protection near the area");
     expect(ACTION_POOL).toContain("Seal windows and stay indoors");
     expect(ACTION_POOL).toContain("Request e-waste collection service");
-    expect(ACTION_POOL).toContain("Schedule a hazardous waste pickup");
+    expect(ACTION_POOL).toContain("Schedule a chemical waste pickup");
     expect(ACTION_POOL).toContain("Restrict public access to the affected zone");
   });
 });

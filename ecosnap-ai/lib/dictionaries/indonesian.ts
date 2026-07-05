@@ -23,5 +23,5 @@ export const INDONESIAN_SIGNALS: KeywordSignal[] = [
   { keyword: "organik", wasteType: "organic", weight: 3 },
   { keyword: "sayur", wasteType: "organic", weight: 2 },
   { keyword: "buah", wasteType: "organic", weight: 2 },
-  { keyword: "baterai", wasteType: "hazardous", weight: 3 },
+  { keyword: "baterai", wasteType: "battery", weight: 3 },
 ];

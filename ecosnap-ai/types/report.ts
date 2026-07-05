@@ -15,14 +15,19 @@ export type PollutionCategory =
 
 // ── Waste subtype (only populated when pollution_category === "waste_pollution")
 export type WasteType =
-  | "organic"
   | "plastic"
+  | "organic"
   | "paper"
   | "glass"
   | "metal"
   | "electronic"
-  | "hazardous"
+  | "chemical"
+  | "medical"
   | "construction"
+  | "battery"
+  | "oil"
+  | "textile"
+  | "rubber"
   | "mixed"
   | "other";
 

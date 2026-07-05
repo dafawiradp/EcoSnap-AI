@@ -1,388 +1,66 @@
 /**
- * =============================================================================
+ * ============================================================================
  * EcoSnap AI
- * Smart Pollution Classifier V3
- * =============================================================================
- *
+ * Classifier V4 Ultimate
+ * ----------------------------------------------------------------------------
  * Features
- * --------
- * ✅ English + Indonesian
- * ✅ Weighted keyword scoring
- * ✅ Context-aware classification
- * ✅ Waste subtype detection
- * ✅ Confidence score
- * ✅ Negative sentence detection
- * ✅ Easy to replace with Gemini Vision later
- * =============================================================================
+ * ----------------------------------------------------------------------------
+ * ✔ English + Indonesian
+ * ✔ Synonym Engine
+ * ✔ Phrase Matching
+ * ✔ Regex Matching
+ * ✔ Weighted Category Scoring
+ * ✔ Waste Type Detection
+ * ✔ Severity Detection
+ * ✔ Confidence Engine
+ * ✔ Context Rules
+ * ✔ Anti False Positive
+ * ✔ Easily replaceable by Gemini Vision
+ *
+ * Compatible:
+ * Next.js 15
+ * React 19
+ * TypeScript 5+
+ * ============================================================================
  */
 
-import type {
-  PollutionCategory,
-  WasteType,
-} from "@/types/report";
+export type PollutionCategory =
+  | "air_pollution"
+  | "water_pollution"
+  | "soil_pollution"
+  | "waste_pollution"
+  | "noise_pollution"
+  | "light_pollution"
+  | "thermal_pollution"
+  | "electromagnetic_pollution"
+  | "visual_pollution"
+  | "other";
 
-export type {
-  PollutionCategory,
-  WasteType,
-};
-
-/* ============================================================================
- * Classification Result
- * ==========================================================================*/
+export type WasteType =
+  | "plastic"
+  | "organic"
+  | "paper"
+  | "metal"
+  | "glass"
+  | "electronic"
+  | "chemical"
+  | "medical"
+  | "construction"
+  | "mixed"
+  | "other";
 
 export interface ClassificationResult {
   category: PollutionCategory;
-  waste_type: WasteType | null;
+  waste_type: WasteType;
   raw_confidence: number;
   matchedSignals: string[];
 }
 
-/* ============================================================================
- * Internal Types
- * ==========================================================================*/
-
-interface CategorySignal {
-  keyword: string;
-  category: PollutionCategory;
-  weight: number;
+interface MatchResult {
+  score: number;
+  signals: string[];
 }
-
-interface WasteSignal {
-  keyword: string;
-  type: WasteType;
-  weight: number;
-}
-
-/* ============================================================================
- * Category Signals
- *
- * Higher weight = stronger evidence.
- * ==========================================================================*/
-
-const CATEGORY_SIGNALS: CategorySignal[] = [
-
-  // --------------------------------------------------------------------------
-  // AIR POLLUTION
-  // --------------------------------------------------------------------------
-
-  { keyword: "smoke", category: "air_pollution", weight: 6 },
-  { keyword: "asap", category: "air_pollution", weight: 6 },
-
-  { keyword: "smog", category: "air_pollution", weight: 7 },
-  { keyword: "kabut asap", category: "air_pollution", weight: 7 },
-
-  { keyword: "burning", category: "air_pollution", weight: 6 },
-  { keyword: "burn", category: "air_pollution", weight: 5 },
-  { keyword: "dibakar", category: "air_pollution", weight: 6 },
-  { keyword: "pembakaran", category: "air_pollution", weight: 6 },
-
-  { keyword: "factory smoke", category: "air_pollution", weight: 8 },
-  { keyword: "industrial smoke", category: "air_pollution", weight: 8 },
-
-  { keyword: "chimney", category: "air_pollution", weight: 5 },
-  { keyword: "cerobong", category: "air_pollution", weight: 5 },
-
-  { keyword: "gas leak", category: "air_pollution", weight: 7 },
-  { keyword: "emission", category: "air_pollution", weight: 6 },
-  { keyword: "exhaust", category: "air_pollution", weight: 6 },
-
-  { keyword: "vehicle smoke", category: "air_pollution", weight: 7 },
-
-  { keyword: "air pollution", category: "air_pollution", weight: 9 },
-  { keyword: "polusi udara", category: "air_pollution", weight: 9 },
-
-
-
-  // --------------------------------------------------------------------------
-  // WATER POLLUTION
-  // --------------------------------------------------------------------------
-
-  { keyword: "river", category: "water_pollution", weight: 6 },
-  { keyword: "sungai", category: "water_pollution", weight: 6 },
-
-  { keyword: "lake", category: "water_pollution", weight: 6 },
-  { keyword: "danau", category: "water_pollution", weight: 6 },
-
-  { keyword: "sea", category: "water_pollution", weight: 6 },
-  { keyword: "laut", category: "water_pollution", weight: 6 },
-
-  { keyword: "ocean", category: "water_pollution", weight: 6 },
-
-  { keyword: "water", category: "water_pollution", weight: 2 },
-  { keyword: "air", category: "water_pollution", weight: 2 },
-
-  { keyword: "drain", category: "water_pollution", weight: 4 },
-  { keyword: "ditch", category: "water_pollution", weight: 4 },
-  { keyword: "selokan", category: "water_pollution", weight: 4 },
-  { keyword: "parit", category: "water_pollution", weight: 4 },
-
-  { keyword: "oil spill", category: "water_pollution", weight: 8 },
-
-  { keyword: "wastewater", category: "water_pollution", weight: 8 },
-  { keyword: "limbah cair", category: "water_pollution", weight: 8 },
-
-  { keyword: "floating", category: "water_pollution", weight: 3 },
-  { keyword: "mengapung", category: "water_pollution", weight: 3 },
-
-
-
-  // --------------------------------------------------------------------------
-  // SOIL POLLUTION
-  // --------------------------------------------------------------------------
-
-  { keyword: "soil", category: "soil_pollution", weight: 7 },
-  { keyword: "ground", category: "soil_pollution", weight: 5 },
-  { keyword: "tanah", category: "soil_pollution", weight: 7 },
-
-  { keyword: "contaminated soil", category: "soil_pollution", weight: 8 },
-
-  { keyword: "land pollution", category: "soil_pollution", weight: 8 },
-
-  { keyword: "chemical spill", category: "soil_pollution", weight: 7 },
-
-  { keyword: "pesticide", category: "soil_pollution", weight: 7 },
-
-  { keyword: "herbicide", category: "soil_pollution", weight: 7 },
-
-
-
-  // --------------------------------------------------------------------------
-  // NOISE POLLUTION
-  // --------------------------------------------------------------------------
-
-  { keyword: "noise", category: "noise_pollution", weight: 8 },
-  { keyword: "sound pollution", category: "noise_pollution", weight: 8 },
-
-  { keyword: "bising", category: "noise_pollution", weight: 8 },
-
-  { keyword: "construction noise", category: "noise_pollution", weight: 8 },
-
-  { keyword: "traffic noise", category: "noise_pollution", weight: 8 },
-
-
-
-  // --------------------------------------------------------------------------
-  // LIGHT POLLUTION
-  // --------------------------------------------------------------------------
-
-  { keyword: "light pollution", category: "light_pollution", weight: 8 },
-
-  { keyword: "skyglow", category: "light_pollution", weight: 8 },
-
-  { keyword: "glare", category: "light_pollution", weight: 6 },
-
-
-
-  // --------------------------------------------------------------------------
-  // THERMAL POLLUTION
-  // --------------------------------------------------------------------------
-
-  { keyword: "thermal pollution", category: "thermal_pollution", weight: 9 },
-
-  { keyword: "heat discharge", category: "thermal_pollution", weight: 8 },
-
-
-
-  // --------------------------------------------------------------------------
-  // ELECTROMAGNETIC POLLUTION
-  // --------------------------------------------------------------------------
-
-  { keyword: "electromagnetic", category: "electromagnetic_pollution", weight: 9 },
-
-  { keyword: "electromagnetic radiation", category: "electromagnetic_pollution", weight: 9 },
-
-  { keyword: "emf", category: "electromagnetic_pollution", weight: 8 },
-
-  { keyword: "5g tower", category: "electromagnetic_pollution", weight: 7 },
-
-
-
-  // --------------------------------------------------------------------------
-  // WASTE POLLUTION
-  // --------------------------------------------------------------------------
-
-  { keyword: "trash", category: "waste_pollution", weight: 6 },
-
-  { keyword: "garbage", category: "waste_pollution", weight: 6 },
-
-  { keyword: "rubbish", category: "waste_pollution", weight: 6 },
-
-  { keyword: "waste", category: "waste_pollution", weight: 5 },
-
-  { keyword: "sampah", category: "waste_pollution", weight: 6 },
-
-  { keyword: "limbah", category: "waste_pollution", weight: 5 },
-
-  { keyword: "plastic", category: "waste_pollution", weight: 4 },
-
-  { keyword: "plastik", category: "waste_pollution", weight: 4 },
-
-  { keyword: "bottle", category: "waste_pollution", weight: 3 },
-
-  { keyword: "botol", category: "waste_pollution", weight: 3 },
-
-  { keyword: "bag", category: "waste_pollution", weight: 2 },
-
-  { keyword: "kantong", category: "waste_pollution", weight: 2 },
-
-  { keyword: "illegal dumping", category: "waste_pollution", weight: 9 },
-
-  { keyword: "dumping", category: "waste_pollution", weight: 7 },
-
-  { keyword: "pile of trash", category: "waste_pollution", weight: 8 },
-
-  { keyword: "tumpukan sampah", category: "waste_pollution", weight: 8 },
-
-];
-
-/* ============================================================================
- * Waste Type Signals
- * ==========================================================================*/
-
-const WASTE_SIGNALS: WasteSignal[] = [
-
-  // --------------------------------------------------------------------------
-  // ORGANIC
-  // --------------------------------------------------------------------------
-
-  { keyword: "organic", type: "organic", weight: 6 },
-  { keyword: "food", type: "organic", weight: 5 },
-  { keyword: "food waste", type: "organic", weight: 7 },
-  { keyword: "fruit", type: "organic", weight: 5 },
-  { keyword: "vegetable", type: "organic", weight: 5 },
-  { keyword: "compost", type: "organic", weight: 6 },
-
-  { keyword: "organik", type: "organic", weight: 6 },
-  { keyword: "makanan", type: "organic", weight: 5 },
-  { keyword: "buah", type: "organic", weight: 5 },
-  { keyword: "sayur", type: "organic", weight: 5 },
-
-
-
-  // --------------------------------------------------------------------------
-  // PLASTIC
-  // --------------------------------------------------------------------------
-
-  { keyword: "plastic", type: "plastic", weight: 7 },
-  { keyword: "plastik", type: "plastic", weight: 7 },
-  { keyword: "styrofoam", type: "plastic", weight: 7 },
-  { keyword: "polybag", type: "plastic", weight: 6 },
-  { keyword: "plastic bag", type: "plastic", weight: 7 },
-
-
-
-  // --------------------------------------------------------------------------
-  // PAPER
-  // --------------------------------------------------------------------------
-
-  { keyword: "paper", type: "paper", weight: 6 },
-  { keyword: "cardboard", type: "paper", weight: 7 },
-  { keyword: "newspaper", type: "paper", weight: 6 },
-  { keyword: "kertas", type: "paper", weight: 6 },
-  { keyword: "koran", type: "paper", weight: 6 },
-
-
-
-  // --------------------------------------------------------------------------
-  // GLASS
-  // --------------------------------------------------------------------------
-
-  { keyword: "glass", type: "glass", weight: 6 },
-  { keyword: "broken glass", type: "glass", weight: 8 },
-  { keyword: "glass bottle", type: "glass", weight: 7 },
-  { keyword: "kaca", type: "glass", weight: 6 },
-
-
-
-  // --------------------------------------------------------------------------
-  // METAL
-  // --------------------------------------------------------------------------
-
-  { keyword: "metal", type: "metal", weight: 6 },
-  { keyword: "iron", type: "metal", weight: 6 },
-  { keyword: "steel", type: "metal", weight: 7 },
-  { keyword: "aluminium", type: "metal", weight: 7 },
-  { keyword: "besi", type: "metal", weight: 6 },
-
-
-
-  // --------------------------------------------------------------------------
-  // ELECTRONIC
-  // --------------------------------------------------------------------------
-
-  { keyword: "electronic", type: "electronic", weight: 6 },
-  { keyword: "electronics", type: "electronic", weight: 6 },
-  { keyword: "computer", type: "electronic", weight: 6 },
-  { keyword: "laptop", type: "electronic", weight: 6 },
-  { keyword: "television", type: "electronic", weight: 6 },
-  { keyword: "tv", type: "electronic", weight: 5 },
-  { keyword: "printer", type: "electronic", weight: 5 },
-  { keyword: "e-waste", type: "electronic", weight: 8 },
-
-
-
-  // --------------------------------------------------------------------------
-  // HAZARDOUS
-  // --------------------------------------------------------------------------
-
-  { keyword: "chemical", type: "hazardous", weight: 7 },
-  { keyword: "chemical waste", type: "hazardous", weight: 8 },
-  { keyword: "battery", type: "hazardous", weight: 7 },
-  { keyword: "acid", type: "hazardous", weight: 6 },
-  { keyword: "toxic", type: "hazardous", weight: 8 },
-
-  { keyword: "kimia", type: "hazardous", weight: 7 },
-  { keyword: "baterai", type: "hazardous", weight: 7 },
-  { keyword: "beracun", type: "hazardous", weight: 8 },
-
-
-
-  // --------------------------------------------------------------------------
-  // CONSTRUCTION
-  // --------------------------------------------------------------------------
-
-  { keyword: "construction", type: "construction", weight: 7 },
-  { keyword: "brick", type: "construction", weight: 6 },
-  { keyword: "cement", type: "construction", weight: 6 },
-  { keyword: "concrete", type: "construction", weight: 6 },
-
-  { keyword: "bangunan", type: "construction", weight: 7 },
-  { keyword: "beton", type: "construction", weight: 6 },
-  { keyword: "semen", type: "construction", weight: 6 },
-
-
-
-  // --------------------------------------------------------------------------
-  // MIXED
-  // --------------------------------------------------------------------------
-
-  { keyword: "mixed", type: "mixed", weight: 5 },
-  { keyword: "mixed waste", type: "mixed", weight: 7 },
-
-  { keyword: "campuran", type: "mixed", weight: 5 },
-  { keyword: "sampah campuran", type: "mixed", weight: 7 },
-
-];
-
-/* ============================================================================
- * Configuration
- * ==========================================================================*/
-
-const LOW_CONFIDENCE_THRESHOLD = 6;
-
-/* ============================================================================
- * Negative Keywords
- *
- * Used to detect descriptions that explicitly indicate there is no pollution.
- * ==========================================================================*/
-
-
-/* ============================================================================
- * Helpers
- * ==========================================================================*/
-
-function normalizeText(text: string): string {
-
+function normalize(text: string): string {
   return text
     .toLowerCase()
     .normalize("NFD")
@@ -390,357 +68,808 @@ function normalizeText(text: string): string {
     .replace(/[^\w\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-
 }
+const STOP_WORDS = new Set([
+  "the",
+  "a",
+  "an",
+  "is",
+  "are",
+  "was",
+  "were",
+  "and",
+  "or",
+  "of",
+  "to",
+  "in",
+  "on",
+  "at",
+  "with",
+  "for",
+  "yang",
+  "dan",
+  "di",
+  "ke",
+  "dari",
+  "itu",
+  "ini",
+  "ada",
+  "sangat",
+]);
+export function tokenize(text: string): string[] {
+  return canonicalize(
+    normalize(text).split(/\s+/)
+  )
+    .filter((t) => t.length > 1)
+    .filter((t) => !STOP_WORDS.has(t));
+}
+const SYNONYMS: Record<string, string[]> = {
+  smoke: [
+    "smoke",
+    "fumes",
+    "emission",
+    "emissions",
+    "asap",
+    "kepulan asap",
+    "black smoke",
+    "thick smoke",
+    "dark smoke",
+    "gas buang",
+  ],
 
-function scoreCategory(text: string) {
+  river: [
+    "river",
+    "stream",
+    "lake",
+    "canal",
+    "drain",
+    "sungai",
+    "selokan",
+    "parit",
+    "danau",
+  ],
 
-  const scores = new Map<PollutionCategory, number>();
+  plastic: [
+    "plastic",
+    "plastik",
+    "bottle",
+    "botol",
+    "cup",
+    "gelas plastik",
+    "plastic bag",
+    "kantong plastik",
+    "styrofoam",
+    "straw",
+    "sedotan",
+  ],
 
-  const matchedSignals: string[] = [];
+  garbage: [
+    "garbage",
+    "trash",
+    "waste",
+    "rubbish",
+    "litter",
+    "sampah",
+    "limbah",
+    "buangan",
+  ],
 
-  for (const signal of CATEGORY_SIGNALS) {
+  burning: [
+    "burning",
+    "burn",
+    "dibakar",
+    "membakar",
+    "terbakar",
+  ],
 
-    if (text.includes(signal.keyword)) {
+  dirty: [
+    "dirty",
+    "polluted",
+    "contaminated",
+    "kotor",
+    "tercemar",
+    "bau",
+    "berbau",
+  ],
 
-      matchedSignals.push(signal.keyword);
+  factory: [
+    "factory",
+    "industry",
+    "industrial",
+    "pabrik",
+    "industri",
+  ],
 
-      scores.set(
-        signal.category,
-        (scores.get(signal.category) ?? 0) + signal.weight
-      );
+  loud: [
+    "loud",
+    "noise",
+    "noisy",
+    "berisik",
+    "bising",
+    "keras",
+  ],
 
+  light: [
+    "bright",
+    "lamp",
+    "lighting",
+    "light",
+    "lampu",
+    "cahaya",
+    "silau",
+  ],
+
+  electronic: [
+    "battery",
+    "computer",
+    "phone",
+    "tv",
+    "monitor",
+    "electronic",
+    "e waste",
+    "e-waste",
+    "elektronik",
+    "baterai",
+  ],
+};
+const SYNONYM_LOOKUP: Record<string, string> = {};
+
+for (const [canonical, words] of Object.entries(SYNONYMS)) {
+  for (const word of words) {
+    SYNONYM_LOOKUP[word] = canonical;
+  }
+}
+function canonicalize(tokens: string[]): string[] {
+  return tokens.map((t) => SYNONYM_LOOKUP[t] ?? t);
+}
+function containsPhrase(
+  text: string,
+  phrases: string[]
+): string[] {
+  const found: string[] = [];
+
+  for (const phrase of phrases) {
+    if (text.includes(phrase)) {
+      found.push(phrase);
     }
+  }
 
+  return found;
+}
+function keywordScore(
+  text: string,
+  keywords: string[],
+  weight = 1
+): MatchResult {
+
+  const normalized = normalize(text);
+
+  let score = 0;
+
+  const signals: string[] = [];
+
+  for (const keyword of keywords) {
+    if (normalized.includes(keyword)) {
+      score += weight;
+      signals.push(keyword);
+    }
   }
 
   return {
+    score,
+    signals,
+  };
+}
+function regexScore(
+  text: string,
+  patterns: RegExp[],
+  weight = 2
+): MatchResult {
 
-    scores,
+  let score = 0;
 
-    matchedSignals,
+  const signals: string[] = [];
+
+  for (const pattern of patterns) {
+    const matches = text.match(pattern);
+
+    if (matches) {
+      score += weight * matches.length;
+      signals.push(pattern.source);
+    }
+  }
+
+  return {
+    score,
+    signals,
+  };
+}
+/* ============================================================================
+ * CATEGORY KNOWLEDGE BASE
+ * ==========================================================================*/
+
+interface CategoryRule {
+  keywords: string[];
+  phrases: string[];
+  regex: RegExp[];
+  weight: number;
+}
+
+const CATEGORY_RULES: Record<PollutionCategory, CategoryRule> = {
+
+  air_pollution: {
+
+    weight: 5,
+
+    keywords: [
+
+      "smoke",
+      "asap",
+      "emission",
+      "gas",
+      "fumes",
+      "chimney",
+      "factory",
+      "dust",
+      "vehicle",
+      "diesel",
+      "burn",
+      "burning",
+      "fire",
+      "coal",
+      "carbon",
+      "soot",
+      "odor",
+      "bau",
+      "industrial",
+      "air"
+
+    ],
+
+    phrases: [
+
+      "black smoke",
+
+      "thick smoke",
+
+      "burning trash",
+
+      "burning plastic",
+
+      "factory smoke",
+
+      "vehicle emission",
+
+      "toxic gas",
+
+      "air pollution"
+
+    ],
+
+    regex: [
+
+      /smok(e|ing)/gi,
+
+      /emission(s)?/gi,
+
+      /burn(ing)?/gi
+
+    ]
+
+  },
+
+  water_pollution: {
+
+    weight: 5,
+
+    keywords: [
+
+      "river",
+
+      "lake",
+
+      "canal",
+
+      "drain",
+
+      "stream",
+
+      "water",
+
+      "oil",
+
+      "foam",
+
+      "chemical",
+
+      "wastewater",
+
+      "sewage",
+
+      "floating",
+
+      "fish",
+
+      "dead fish",
+
+      "spill",
+
+      "sungai",
+
+      "air",
+
+      "selokan",
+
+      "parit",
+
+      "limbah"
+
+    ],
+
+    phrases: [
+
+      "oil spill",
+
+      "dead fish",
+
+      "dirty river",
+
+      "floating trash",
+
+      "chemical waste",
+
+      "river pollution",
+
+      "plastic floating"
+
+    ],
+
+    regex: [
+
+      /river/gi,
+
+      /water/gi,
+
+      /spill/gi
+
+    ]
+
+  },
+
+  soil_pollution: {
+
+    weight: 4,
+
+    keywords: [
+
+      "soil",
+
+      "ground",
+
+      "land",
+
+      "earth",
+
+      "contaminated",
+
+      "fertilizer",
+
+      "pesticide",
+
+      "dump",
+
+      "illegal dumping",
+
+      "landfill",
+
+      "tanah",
+
+      "lahan"
+
+    ],
+
+    phrases: [
+
+      "contaminated soil",
+
+      "illegal dumping",
+
+      "chemical soil"
+
+    ],
+
+    regex: [
+
+      /soil/gi,
+
+      /ground/gi
+
+    ]
+
+  },
+
+  waste_pollution: {
+
+    weight: 6,
+
+    keywords: [
+
+      "garbage",
+
+      "trash",
+
+      "waste",
+
+      "plastic",
+
+      "bottle",
+
+      "bag",
+
+      "styrofoam",
+
+      "paper",
+
+      "glass",
+
+      "can",
+
+      "organic",
+
+      "rubbish",
+
+      "litter",
+
+      "sampah",
+
+      "plastik",
+
+      "limbah",
+
+      "botol"
+
+    ],
+
+    phrases: [
+
+      "plastic bottle",
+
+      "plastic waste",
+
+      "garbage pile",
+
+      "illegal waste",
+
+      "overflowing trash",
+
+      "mixed waste"
+
+    ],
+
+    regex: [
+
+      /trash/gi,
+
+      /garbage/gi,
+
+      /plastic/gi
+
+    ]
+
+  },
+
+  noise_pollution: {
+
+    weight: 4,
+
+    keywords: [
+
+      "noise",
+
+      "loud",
+
+      "speaker",
+
+      "horn",
+
+      "music",
+
+      "machine",
+
+      "generator",
+
+      "construction",
+
+      "berisik",
+
+      "bising"
+
+    ],
+
+    phrases: [
+
+      "construction noise",
+
+      "loud music",
+
+      "vehicle horn"
+
+    ],
+
+    regex: [
+
+      /noise/gi,
+
+      /loud/gi
+
+    ]
+
+  },
+
+  light_pollution: {
+
+    weight: 3,
+
+    keywords: [
+
+      "light",
+
+      "lamp",
+
+      "lighting",
+
+      "bright",
+
+      "spotlight",
+
+      "led",
+
+      "billboard",
+
+      "cahaya",
+
+      "lampu",
+
+      "silau"
+
+    ],
+
+    phrases: [
+
+      "too bright",
+
+      "street light",
+
+      "light pollution"
+
+    ],
+
+    regex: [
+
+      /bright/gi
+
+    ]
+
+  },
+
+  thermal_pollution: {
+
+    weight: 4,
+
+    keywords: [
+
+      "hot water",
+
+      "warm water",
+
+      "thermal",
+
+      "heat",
+
+      "steam",
+
+      "cooling",
+
+      "boiler"
+
+    ],
+
+    phrases: [
+
+      "hot wastewater",
+
+      "thermal pollution"
+
+    ],
+
+    regex: [
+
+      /thermal/gi
+
+    ]
+
+  },
+
+  electromagnetic_pollution: {
+
+    weight: 2,
+
+    keywords: [
+
+      "tower",
+
+      "antenna",
+
+      "cell tower",
+
+      "wifi",
+
+      "radiation",
+
+      "signal",
+
+      "electromagnetic"
+
+    ],
+
+    phrases: [
+
+      "cell tower"
+
+    ],
+
+    regex: [
+
+      /antenna/gi
+
+    ]
+
+  },
+
+  visual_pollution: {
+
+    weight: 2,
+
+    keywords: [
+
+      "billboard",
+
+      "poster",
+
+      "banner",
+
+      "messy",
+
+      "visual",
+
+      "graffiti",
+
+      "advertisement"
+
+    ],
+
+    phrases: [
+
+      "too many billboards"
+
+    ],
+
+    regex: [
+
+      /billboard/gi
+
+    ]
+
+  },
+
+  other: {
+
+    weight: 1,
+
+    keywords: [],
+
+    phrases: [],
+
+    regex: []
+
+  }
+
+};
+/* ============================================================================
+ * CATEGORY SCORING ENGINE
+ * ==========================================================================*/
+
+function scoreCategory(
+  text: string,
+  category: PollutionCategory
+): MatchResult {
+
+  const rule = CATEGORY_RULES[category];
+
+  let total = 0;
+
+  const signals: string[] = [];
+
+  const kw = keywordScore(
+    text,
+    rule.keywords,
+    rule.weight
+  );
+
+  total += kw.score;
+
+  signals.push(...kw.signals);
+
+  const rg = regexScore(
+    text,
+    rule.regex,
+    rule.weight
+  );
+
+  total += rg.score;
+
+  signals.push(...rg.signals);
+
+  const ph = containsPhrase(
+    normalize(text),
+    rule.phrases
+  );
+
+  total += ph.length * rule.weight * 3;
+
+  signals.push(...ph);
+
+  return {
+
+    score: total,
+
+    signals
 
   };
 
 }
-
-function scoreWasteType(text: string): WasteType {
-
-  const scores = new Map<WasteType, number>();
-
-  for (const signal of WASTE_SIGNALS) {
-
-    if (text.includes(signal.keyword)) {
-
-      scores.set(
-        signal.type,
-        (scores.get(signal.type) ?? 0) + signal.weight
-      );
-
-    }
-
-  }
-
-  if (scores.size === 0) {
-
-    return "mixed";
-
-  }
-
-  let winner: WasteType = "mixed";
-
-  let highest = -1;
-
-  for (const [type, score] of scores.entries()) {
-
-    if (score > highest) {
-
-      highest = score;
-
-      winner = type;
-
-    }
-
-  }
-
-  return winner;
-
-}
-
 /* ============================================================================
- * Context Rules
- *
- * Context rules are applied AFTER keyword scoring.
- * They boost the most likely category based on combinations
- * of signals rather than individual words.
+ * FIND BEST CATEGORY
  * ==========================================================================*/
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+  function detectCategory(text: string): {
 
-function applyContextRules(
-  text: string,
-  scores: Map<PollutionCategory, number>
-): void {
+  category: PollutionCategory;
 
-  const hasWater =
-    /(river|lake|ocean|sea|water|stream|pond|sungai|laut|danau|selokan|parit)/.test(text);
+  score: number;
 
-  const hasPlastic =
-    /(plastic|plastik|bottle|botol|bag|kantong|styrofoam|polybag)/.test(text);
+  signals: string[];
 
-  const hasTrash =
-    /(trash|garbage|waste|rubbish|sampah|limbah)/.test(text);
-
-  const hasSmoke =
-    /(smoke|asap|smog|kabut asap)/.test(text);
-
-  const hasBurning =
-    /(burn|burning|dibakar|pembakaran|fire|api)/.test(text);
-
-  const hasFactory =
-    /(factory|industrial|industry|pabrik)/.test(text);
-
-  const hasChemical =
-    /(chemical|kimia|acid|toxic|beracun)/.test(text);
-
-  const hasSoil =
-    /(soil|ground|tanah)/.test(text);
-
-  const hasFood =
-    /(food|fruit|vegetable|makanan|buah|sayur)/.test(text);
-
-  const hasOil =
-    /(oil|oli|minyak)/.test(text);
-
-
-
-  // ============================================================
-  // Plastic inside river
-  // ============================================================
-
-  if (hasPlastic && hasWater) {
-
-    scores.set(
-      "water_pollution",
-      (scores.get("water_pollution") ?? 0) + 10
-    );
-
-  }
-
-
-
-  // ============================================================
-  // Trash floating on water
-  // ============================================================
-
-  if (
-    hasTrash &&
-    hasWater &&
-    /(floating|mengapung)/.test(text)
-  ) {
-
-    scores.set(
-      "water_pollution",
-      (scores.get("water_pollution") ?? 0) + 12
-    );
-
-  }
-
-
-
-  // ============================================================
-  // Burning garbage
-  // ============================================================
-
-  if (
-    hasBurning &&
-    (hasTrash || hasPlastic)
-  ) {
-
-    scores.set(
-      "air_pollution",
-      (scores.get("air_pollution") ?? 0) + 12
-    );
-
-  }
-
-
-
-  // ============================================================
-  // Smoke + Factory
-  // ============================================================
-
-  if (
-    hasSmoke &&
-    hasFactory
-  ) {
-
-    scores.set(
-      "air_pollution",
-      (scores.get("air_pollution") ?? 0) + 10
-    );
-
-  }
-
-
-
-  // ============================================================
-  // Factory wastewater
-  // ============================================================
-
-  if (
-    hasFactory &&
-    hasWater &&
-    /(wastewater|limbah cair|dumping|discharge)/.test(text)
-  ) {
-
-    scores.set(
-      "water_pollution",
-      (scores.get("water_pollution") ?? 0) + 12
-    );
-
-  }
-
-
-
-  // ============================================================
-  // Oil spill
-  // ============================================================
-
-  if (
-    hasOil &&
-    hasWater
-  ) {
-
-    scores.set(
-      "water_pollution",
-      (scores.get("water_pollution") ?? 0) + 12
-    );
-
-  }
-
-
-
-  // ============================================================
-  // Chemical contamination on soil
-  // ============================================================
-
-  if (
-    hasChemical &&
-    hasSoil
-  ) {
-
-    scores.set(
-      "soil_pollution",
-      (scores.get("soil_pollution") ?? 0) + 12
-    );
-
-  }
-
-
-
-  // ============================================================
-  // Food waste
-  // ============================================================
-
-  if (
-    hasFood &&
-    hasTrash
-  ) {
-
-    scores.set(
-      "waste_pollution",
-      (scores.get("waste_pollution") ?? 0) + 8
-    );
-
-  }
-
-
-
-  // ============================================================
-  // Noise from construction
-  // ============================================================
-
-  if (
-    /(construction|bangunan)/.test(text) &&
-    /(noise|bising)/.test(text)
-  ) {
-
-    scores.set(
-      "noise_pollution",
-      (scores.get("noise_pollution") ?? 0) + 10
-    );
-
-  }
-
-
-
-  // ============================================================
-  // Thermal discharge
-  // ============================================================
-
-  if (
-    /(heat|thermal|panas)/.test(text) &&
-    hasWater
-  ) {
-
-    scores.set(
-      "thermal_pollution",
-      (scores.get("thermal_pollution") ?? 0) + 10
-    );
-
-  }
-
-
-
-  // ============================================================
-  // Electromagnetic
-  // ============================================================
-
-  if (
-    /(tower|antenna|5g|wifi|emf|radio)/.test(text)
-  ) {
-
-    scores.set(
-      "electromagnetic_pollution",
-      (scores.get("electromagnetic_pollution") ?? 0) + 8
-    );
-
-  }
-
-}
-
-/* ============================================================================
- * Winner Selection
- * ==========================================================================*/
-
-function chooseCategory(
-  scores: Map<PollutionCategory, number>
-) {
+} {
 
   let bestCategory: PollutionCategory = "other";
 
-  let bestScore = 0;
+  let highestScore = 0;
 
-  for (const [category, score] of scores.entries()) {
+  let matchedSignals: string[] = [];
 
-    if (score > bestScore) {
+  const categories = Object.keys(
+    CATEGORY_RULES
+  ) as PollutionCategory[];
 
-      bestScore = score;
+  for (const category of categories) {
+
+    if (category === "other") continue;
+
+    const result = scoreCategory(
+      text,
+      category
+    );
+
+    if (result.score > highestScore) {
+
+      highestScore = result.score;
 
       bestCategory = category;
 
+      matchedSignals = result.signals;
+
     }
-
-  }
-
-  if (bestScore < LOW_CONFIDENCE_THRESHOLD) {
-
-    return {
-
-      category: "other" as PollutionCategory,
-
-      score: bestScore,
-
-    };
 
   }
 
@@ -748,156 +877,622 @@ function chooseCategory(
 
     category: bestCategory,
 
-    score: bestScore,
+    score: highestScore,
+
+    signals: matchedSignals
 
   };
 
 }
-
 /* ============================================================================
- * Confidence Calculation
+ * WASTE TYPE ENGINE
  * ==========================================================================*/
 
-function calculateConfidence(
-  score: number,
-  matchedSignals: number
-): number {
-
-  let confidence = 35;
-
-  confidence += score * 6;
-
-  confidence += matchedSignals * 3;
-
-  if (confidence > 99) confidence = 99;
-
-  if (confidence < 30) confidence = 30;
-
-  return Math.round(confidence);
-
+interface WasteRule {
+  keywords: string[];
 }
 
-/* ============================================================================
- * MAIN CLASSIFIER
- * ==========================================================================*/
+const WASTE_RULES: Record<WasteType, WasteRule> = {
 
-export function classify(
-  description: string,
-  imageHint?: string
-): ClassificationResult {
+  plastic: {
+    keywords: [
+      "plastic",
+      "plastik",
+      "bottle",
+      "botol",
+      "cup",
+      "gelas",
+      "straw",
+      "sedotan",
+      "bag",
+      "kantong",
+      "styrofoam",
+      "wrapper",
+      "packaging"
+    ]
+  },
 
-  //--------------------------------------------------
-  // Normalize
-  //--------------------------------------------------
+  organic: {
+    keywords: [
+      "leaf",
+      "leaves",
+      "wood",
+      "tree",
+      "food",
+      "fruit",
+      "vegetable",
+      "organic",
+      "daun",
+      "buah",
+      "ranting",
+      "makanan"
+    ]
+  },
 
-  const text = normalizeText(
-    [imageHint, description]
-      .filter(Boolean)
-      .join(" ")
-  );
+  paper: {
+    keywords: [
+      "paper",
+      "cardboard",
+      "newspaper",
+      "book",
+      "paper bag",
+      "kertas",
+      "koran"
+    ]
+  },
 
-  //--------------------------------------------------
-  // Negative sentences
-  //--------------------------------------------------
+  glass: {
+    keywords: [
+      "glass",
+      "bottle glass",
+      "jar",
+      "broken glass",
+      "kaca"
+    ]
+  },
 
-  const negativeKeywords = [
-    "clean",
-    "beautiful",
-    "healthy",
-    "no pollution",
-    "tidak ada sampah",
-    "bersih",
-    "rapi",
-    "indah",
-    "sehat",
-  ];
+  metal: {
+    keywords: [
+      "metal",
+      "iron",
+      "steel",
+      "aluminium",
+      "can",
+      "kaleng",
+      "besi"
+    ]
+  },
 
-  for (const keyword of negativeKeywords) {
+  electronic: {
+    keywords: [
+      "battery",
+      "computer",
+      "monitor",
+      "phone",
+      "television",
+      "tv",
+      "printer",
+      "keyboard",
+      "laptop",
+      "electronic",
+      "e waste",
+      "e-waste",
+      "baterai"
+    ]
+  },
 
-    if (text.includes(keyword)) {
+  chemical: {
+    keywords: [
+      "chemical",
+      "acid",
+      "oil",
+      "fuel",
+      "diesel",
+      "gasoline",
+      "paint",
+      "mercury",
+      "oli",
+      "bahan kimia"
+    ]
+  },
 
-      return {
-        category: "other",
-        waste_type: null,
-        raw_confidence: 25,
-        matchedSignals: [],
-      };
+  medical: {
+    keywords: [
+      "hospital",
+      "mask",
+      "needle",
+      "syringe",
+      "bandage",
+      "medicine",
+      "medical",
+      "jarum",
+      "masker"
+    ]
+  },
+
+  construction: {
+    keywords: [
+      "cement",
+      "brick",
+      "concrete",
+      "sand",
+      "construction",
+      "bangunan",
+      "beton",
+      "batu bata"
+    ]
+  },
+
+  mixed: {
+    keywords: []
+  },
+
+  other: {
+    keywords: []
+  }
+
+};
+function detectWasteType(text: string): WasteType {
+
+  const normalized = normalize(text);
+
+  let highest = 0;
+
+  let best: WasteType = "other";
+
+  for (const [type, rule] of Object.entries(WASTE_RULES)) {
+
+    let score = 0;
+
+    for (const keyword of rule.keywords) {
+
+      if (normalized.includes(keyword)) {
+
+        score++;
+
+      }
+
+    }
+
+    if (score > highest) {
+
+      highest = score;
+
+      best = type as WasteType;
 
     }
 
   }
 
-  //--------------------------------------------------
-  // Base score
-  //--------------------------------------------------
+  return best;
 
-  const {
-    scores,
-    matchedSignals,
-  } = scoreCategory(text);
+}
+/* ============================================================================
+ * SEVERITY ENGINE
+ * ==========================================================================*/
 
-  //--------------------------------------------------
-  // Context rules
-  //--------------------------------------------------
+const SEVERITY_KEYWORDS = [
 
-  applyContextRules(text, scores);
+  "huge",
+  "massive",
+  "large",
+  "many",
+  "thousands",
+  "overflowing",
+  "overflow",
+  "everywhere",
+  "serious",
+  "critical",
+  "extreme",
+  "very",
 
-  //--------------------------------------------------
-  // Winner
-  //--------------------------------------------------
+  "besar",
+  "parah",
+  "sangat",
+  "menumpuk",
+  "meluap",
+  "banyak",
+  "luas"
 
-  const {
-    category,
-    score,
-  } = chooseCategory(scores);
+];
+function severityScore(text: string): number {
 
-  //--------------------------------------------------
-  // Waste subtype
-  //--------------------------------------------------
+  const normalized = normalize(text);
 
-  let waste_type: WasteType | null = null;
+  let score = 0;
 
-  if (category === "waste_pollution") {
+  for (const word of SEVERITY_KEYWORDS) {
 
-    waste_type = scoreWasteType(text);
+    if (normalized.includes(word)) {
+
+      score += 5;
+
+    }
 
   }
 
-  //--------------------------------------------------
-  // Confidence
-  //--------------------------------------------------
+  return score;
 
-  const raw_confidence = calculateConfidence(
-    score,
-    matchedSignals.length
+}
+/* ============================================================================
+ * CONTEXT ENGINE
+ * ==========================================================================*/
+
+interface ContextRule {
+
+  trigger: string[];
+
+  boost: PollutionCategory;
+
+  score: number;
+
+}
+
+const CONTEXT_RULES: ContextRule[] = [
+
+  {
+
+    trigger: [
+
+      "burning",
+
+      "plastic"
+
+    ],
+
+    boost: "air_pollution",
+
+    score: 20
+
+  },
+
+  {
+
+    trigger: [
+
+      "river",
+
+      "plastic"
+
+    ],
+
+    boost: "water_pollution",
+
+    score: 18
+
+  },
+
+  {
+
+    trigger: [
+
+      "factory",
+
+      "smoke"
+
+    ],
+
+    boost: "air_pollution",
+
+    score: 25
+
+  },
+
+  {
+
+    trigger: [
+
+      "chemical",
+
+      "river"
+
+    ],
+
+    boost: "water_pollution",
+
+    score: 25
+
+  },
+
+  {
+
+    trigger: [
+
+      "battery",
+
+      "dump"
+
+    ],
+
+    boost: "waste_pollution",
+
+    score: 20
+
+  },
+
+  {
+
+    trigger: [
+
+      "hospital",
+
+      "needle"
+
+    ],
+
+    boost: "waste_pollution",
+
+    score: 18
+
+  }
+
+];
+function contextBoost(
+
+  text: string,
+
+  category: PollutionCategory
+
+): number {
+
+  const normalized = normalize(text);
+
+  let boost = 0;
+
+  for (const rule of CONTEXT_RULES) {
+
+    if (rule.boost !== category) continue;
+
+    const matched = rule.trigger.every(
+
+      keyword => normalized.includes(keyword)
+
+    );
+
+    if (matched) {
+
+      boost += rule.score;
+
+    }
+
+  }
+
+  return boost;
+
+}
+interface RankedCategory {
+
+  category: PollutionCategory;
+
+  score: number;
+
+}
+
+function rankCategories(text: string): RankedCategory[] {
+
+  const list: RankedCategory[] = [];
+
+  const categories = Object.keys(
+
+    CATEGORY_RULES
+
+  ) as PollutionCategory[];
+
+  for (const category of categories) {
+
+    if (category === "other") continue;
+
+    const result = scoreCategory(
+
+      text,
+
+      category
+
+    );
+
+    const finalScore =
+
+      result.score +
+
+      contextBoost(text, category);
+
+    list.push({
+
+      category,
+
+      score: finalScore
+
+    });
+
+  }
+
+  list.sort(
+
+    (a, b) => b.score - a.score
+
   );
 
-  //--------------------------------------------------
-  // Result
-  //--------------------------------------------------
+  return list;
+
+}
+/* ============================================================================
+ * CONFIDENCE ENGINE
+ * ==========================================================================*/
+
+const NEGATIVE_KEYWORDS = [
+  "not",
+  "no",
+  "none",
+  "nothing",
+  "clean",
+  "safe",
+  "clear",
+  "tidak",
+  "bukan",
+  "bersih",
+  "aman"
+];
+
+function negativePenalty(text: string): number {
+
+  const normalized = normalize(text);
+
+  let penalty = 0;
+
+  for (const word of NEGATIVE_KEYWORDS) {
+
+    if (normalized.includes(word)) {
+
+      penalty += 10;
+
+    }
+
+  }
+
+  return penalty;
+
+}
+
+function normalizeConfidence(score: number): number {
+
+  const confidence =
+
+    100 * (1 - Math.exp(-score / 45));
+
+  return Math.max(
+    35,
+    Math.min(
+      99,
+      Math.round(confidence)
+    )
+  );
+
+}
+/* ============================================================================
+ * FINAL CLASSIFIER
+ * ==========================================================================*/
+
+export function classify(
+  description: string
+): ClassificationResult {
+
+  const normalized = normalize(description);
+
+const tokens = canonicalize(
+  normalized.split(/\s+/)
+);
+
+const text = tokens.join(" ");
+
+  if (!text.trim()) {
+
+    return {
+
+      category: "other",
+
+      waste_type: "other",
+
+      raw_confidence: 35,
+
+      matchedSignals: []
+
+    };
+
+  }
+
+  //----------------------------------
+  // Category Ranking
+  //----------------------------------
+
+  const ranked = rankCategories(text);
+
+  const best = ranked[0];
+
+  //----------------------------------
+  // Waste Type
+  //----------------------------------
+
+  const waste = detectWasteType(text);
+
+  //----------------------------------
+  // Severity
+  //----------------------------------
+
+  const severity = severityScore(text);
+
+  //----------------------------------
+  // Negative penalty
+  //----------------------------------
+
+  const penalty = negativePenalty(text);
+
+  //----------------------------------
+  // Final Score
+  //----------------------------------
+
+  const finalScore =
+
+    best.score +
+
+    severity -
+
+    penalty;
+
+  //----------------------------------
+  // Confidence
+  //----------------------------------
+
+  const confidence = normalizeConfidence(
+    finalScore
+  );
+
+  //----------------------------------
+  // Signals
+  //----------------------------------
+
+  const signals = scoreCategory(
+
+    text,
+
+    best.category
+
+  ).signals;
 
   return {
 
-    category,
+    category: best.category,
 
-    waste_type,
+    waste_type: waste,
 
-    raw_confidence,
+    raw_confidence: confidence,
 
-    matchedSignals,
+    matchedSignals: [...new Set(signals)]
 
   };
 
 }
-
 /* ============================================================================
- * Backward Compatibility
+ * OPTIONAL ANALYSIS
  * ==========================================================================*/
 
-export function classifyCategory(
+export function analyzeDescription(
   description: string
-): PollutionCategory {
+) {
 
-  return classify(description).category;
+  const ranked = rankCategories(description);
+
+  const waste = detectWasteType(description);
+
+  const severity = severityScore(description);
+
+  return {
+
+    rankedCategories: ranked,
+
+    wasteType: waste,
+
+    severity
+
+  };
 
 }

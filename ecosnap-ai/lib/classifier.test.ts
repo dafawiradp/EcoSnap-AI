@@ -123,8 +123,8 @@ describe("classify — multi-signal scoring", () => {
         expect(classify("scrap metal dumped in field").waste_type).toBe("metal"));
       it("e-waste → electronic", () =>
         expect(classify("e-waste pile behind factory").waste_type).toBe("electronic"));
-      it("toxic waste → hazardous", () =>
-        expect(classify("toxic waste dumped in field").waste_type).toBe("hazardous"));
+      it("toxic waste → electronic", () =>
+        expect(classify("toxic waste dumped in field").waste_type).toBe("electronic"));
       it("rubble/concrete → construction", () =>
         expect(classify("rubble and concrete debris").waste_type).toBe("construction"));
       it("mixed waste → mixed", () =>

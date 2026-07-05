@@ -28,5 +28,5 @@ export const ENGLISH_SIGNALS: KeywordSignal[] = [
   { keyword: "organic", wasteType: "organic", weight: 3 },
   { keyword: "vegetable", wasteType: "organic", weight: 2 },
   { keyword: "fruit", wasteType: "organic", weight: 2 },
-  { keyword: "battery", wasteType: "hazardous", weight: 3 },
+  { keyword: "battery", wasteType: "battery", weight: 3,}
 ];
