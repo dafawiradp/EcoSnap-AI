@@ -376,26 +376,6 @@ const LOW_CONFIDENCE_THRESHOLD = 6;
  * Used to detect descriptions that explicitly indicate there is no pollution.
  * ==========================================================================*/
 
-const NEGATIVE_KEYWORDS = [
-
-  "clean",
-  "clear",
-  "beautiful",
-  "healthy",
-
-  "no pollution",
-  "not polluted",
-
-  "bersih",
-  "rapi",
-  "indah",
-  "sehat",
-
-  "tidak ada sampah",
-  "tidak ada limbah",
-  "tidak ada polusi",
-
-];
 
 /* ============================================================================
  * Helpers
@@ -410,14 +390,6 @@ function normalizeText(text: string): string {
     .replace(/[^\w\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-
-}
-
-function containsNegativeKeyword(text: string): boolean {
-
-  return NEGATIVE_KEYWORDS.some(keyword =>
-    text.includes(keyword)
-  );
 
 }
 
